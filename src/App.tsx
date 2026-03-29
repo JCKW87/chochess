@@ -112,7 +112,7 @@ function Home({ onPick }: { onPick: (l: Lesson) => void }) {
   return (
     <div className="home">
       <section className="hero-card">
-        <h1>Hi, young chess star!</h1>
+        <h1>Hello, Zoey, Isaac & Lucas!</h1>
         <p>
           Thirteen basics lessons end with a mini-game that ties everything
           together, then you can try tactics puzzles. Your progress is saved on
