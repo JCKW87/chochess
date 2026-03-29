@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap');
+
+:root {
+  --ct-ink: #1c2740;
+  --ct-ink-soft: #3d4a63;
+  --ct-muted: #5c6b82;
+  --ct-bg: #fff9f0;
+  --ct-surface: #ffffff;
+  --ct-surface-hover: #f3f6fb;
+  --ct-border: #d4dce8;
+  --ct-border-soft: #e8edf5;
+  --ct-accent: #3d8bc4;
+  --ct-accent-hover: #2f7ab0;
+  --ct-accent-dark: #256894;
+  --ct-sun: #ffe8a8;
+  --ct-peach: #ffd4a3;
+  --ct-mint-bg: #d8f5e8;
+  --ct-mint-border: #7dccb0;
+  --ct-mint-ink: #1d6b52;
+  --ct-sky-bg: #e3f2ff;
+  --ct-sky-border: #a8d0f0;
+  --ct-shadow-card: 0 10px 30px rgba(35, 55, 85, 0.08);
+  --ct-font-display: 'Nunito', system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 17px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family:
+    'Nunito',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  background: var(--ct-bg);
+  color: var(--ct-ink-soft);
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--ct-font-display);
+}
+
+a {
+  color: var(--ct-accent-dark);
+}
