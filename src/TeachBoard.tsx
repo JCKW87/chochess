@@ -1,4 +1,11 @@
-import { useCallback, useId, useMemo, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import { Chessboard } from 'react-chessboard'
 import { Chess, type Move, type Square } from 'chess.js'
 import type {
@@ -29,6 +36,22 @@ function useStableBoardDomId(): string {
     const safe = reactId.replace(/[^a-zA-Z0-9]/g, '')
     return `choscb${safe || 'board'}`
   }, [reactId])
+}
+
+/** True when the primary input cannot hover (typical phones / touch-first tablets). */
+function useTouchNoHover(): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      if (typeof window === 'undefined') return () => {}
+      const mq = window.matchMedia('(hover: none)')
+      mq.addEventListener('change', onChange)
+      return () => mq.removeEventListener('change', onChange)
+    },
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(hover: none)').matches,
+    () => false,
+  )
 }
 
 type MoveRules = {
@@ -121,8 +144,14 @@ export function TeachBoard({
   showNotation = true,
 }: TeachBoardProps) {
   const boardDomId = useStableBoardDomId()
+  const touchNoHover = useTouchNoHover()
   const [position, setPosition] = useState(fen)
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null)
+  const [hoverSquare, setHoverSquare] = useState<Square | null>(null)
+
+  useEffect(() => {
+    setHoverSquare(null)
+  }, [selectedSquare])
 
   const rules = useMemo<MoveRules>(
     () => ({
@@ -156,10 +185,36 @@ export function TeachBoard({
 
     const Renderer: SquareRenderer = ({ square, children }) => {
       const isSel = selectedSquare !== null && square === selectedSquare
-      const isLeg = legalDests.has(square)
-      if (!isSel && !isLeg) {
+      const showTouchDots =
+        touchNoHover && selectedSquare !== null && legalDests.size > 0
+      const isTouchLegalDot =
+        showTouchDots && legalDests.has(square) && square !== selectedSquare
+      const isHoverDest =
+        !touchNoHover &&
+        selectedSquare !== null &&
+        hoverSquare !== null &&
+        square === hoverSquare &&
+        square !== selectedSquare
+
+      if (!isSel && !isHoverDest && !isTouchLegalDot) {
         return <>{children}</>
       }
+
+      let overlayBg: string | undefined
+      let overlayRing: string | undefined
+      if (isSel) {
+        overlayBg = 'rgba(241, 196, 15, 0.58)'
+        overlayRing = 'inset 0 0 0 4px rgba(180, 100, 20, 1)'
+      } else if (isHoverDest) {
+        if (legalDests.has(square)) {
+          overlayBg = 'rgba(46, 204, 113, 0.58)'
+          overlayRing = 'inset 0 0 0 4px rgba(15, 110, 55, 1)'
+        } else {
+          overlayBg = 'rgba(231, 76, 60, 0.52)'
+          overlayRing = 'inset 0 0 0 4px rgba(130, 35, 25, 1)'
+        }
+      }
+
       return (
         <div
           style={{
@@ -169,27 +224,62 @@ export function TeachBoard({
           }}
         >
           {children}
-          <div
-            aria-hidden
-            style={{
-              position: 'absolute',
-              inset: 0,
-              zIndex: 30,
-              pointerEvents: 'none',
-              backgroundColor: isSel
-                ? 'rgba(241, 196, 15, 0.58)'
-                : 'rgba(46, 204, 113, 0.58)',
-              boxShadow: isSel
-                ? 'inset 0 0 0 4px rgba(180, 100, 20, 1)'
-                : 'inset 0 0 0 4px rgba(15, 110, 55, 1)',
-            }}
-          />
+          {isTouchLegalDot ? (
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 'min(26%, 24px)',
+                aspectRatio: '1',
+                borderRadius: '50%',
+                zIndex: 25,
+                pointerEvents: 'none',
+                backgroundColor: 'rgba(255, 252, 245, 0.92)',
+                boxShadow:
+                  '0 1px 4px rgba(0, 0, 0, 0.28), inset 0 0 0 1px rgba(120, 160, 100, 0.35)',
+              }}
+            />
+          ) : null}
+          {overlayBg !== undefined ? (
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 30,
+                pointerEvents: 'none',
+                backgroundColor: overlayBg,
+                boxShadow: overlayRing,
+              }}
+            />
+          ) : null}
         </div>
       )
     }
 
     return Renderer
-  }, [interactive, legalDests, selectedSquare])
+  }, [
+    interactive,
+    hoverSquare,
+    legalDests,
+    selectedSquare,
+    touchNoHover,
+  ])
+
+  const handleMouseOverSquare = useCallback(
+    ({ square }: SquareHandlerArgs) => {
+      if (!interactive || selectedSquare === null) return
+      setHoverSquare(square as Square)
+    },
+    [interactive, selectedSquare],
+  )
+
+  const handleMouseOutSquare = useCallback(() => {
+    setHoverSquare(null)
+  }, [])
 
   const handleSquareClick = useCallback(
     ({ square }: SquareHandlerArgs) => {
@@ -268,6 +358,8 @@ export function TeachBoard({
           showAnimations: false,
           squareRenderer: interactive ? squareRenderer : undefined,
           onSquareClick: interactive ? handleSquareClick : undefined,
+          onMouseOverSquare: interactive ? handleMouseOverSquare : undefined,
+          onMouseOutSquare: interactive ? handleMouseOutSquare : undefined,
           onPieceDrop: undefined,
           arrows,
           showNotation,

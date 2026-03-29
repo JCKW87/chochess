@@ -358,8 +358,12 @@ function LessonFlow({
             <h3>Practice time</h3>
             <p className="step-body">{lesson.practice.hint}</p>
             <p className="move-howto">
-              Tap your piece first, then tap a <strong>green</strong> square to
-              move. Tap the same piece again to cancel.
+              Tap your piece to select it. On a phone or tablet,{' '}
+              <strong>light dots</strong> show every square you can move to; tap
+              one to go. With a mouse, point at a square:{' '}
+              <strong>green</strong> means you can move there,{' '}
+              <strong>red</strong> means not allowed. Tap the same piece again
+              to cancel.
             </p>
           </div>
 
