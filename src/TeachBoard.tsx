@@ -1,7 +1,11 @@
 import { useCallback, useId, useMemo, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
-import { Chess, type Square } from 'chess.js'
-import type { Arrow, PieceHandlerArgs } from 'react-chessboard'
+import { Chess, type Move, type Square } from 'chess.js'
+import type {
+  Arrow,
+  SquareHandlerArgs,
+  SquareRenderer,
+} from 'react-chessboard'
 
 type TeachBoardProps = {
   fen: string
@@ -13,26 +17,92 @@ type TeachBoardProps = {
   successOnCheckmate?: boolean
   onSuccess?: () => void
   onMoveAccepted?: () => void
+  onPieceLanded?: () => void
   onMoveRejected?: () => void
   arrows?: Arrow[]
   showNotation?: boolean
 }
 
-function pieceTypeFromBoardPiece(pieceType: string): string {
-  const letter = pieceType[1]
-  return letter ? letter.toLowerCase() : ''
-}
-
-/**
- * react-chessboard uses `#${id}-square-…` in querySelector. React `useId()` can
- * include colons, which break CSS selectors and disable dragging—strip them.
- */
 function useStableBoardDomId(): string {
   const reactId = useId()
   return useMemo(() => {
     const safe = reactId.replace(/[^a-zA-Z0-9]/g, '')
     return `choscb${safe || 'board'}`
   }, [reactId])
+}
+
+type MoveRules = {
+  onlyPieceTypes?: string[]
+  goalSquare?: string
+  completeOnAnyMove?: boolean
+  solutionMoves?: { from: string; to: string }[]
+  successOnCheckmate?: boolean
+}
+
+function tryApplyMove(
+  fen: string,
+  from: Square,
+  to: Square,
+  rules: MoveRules,
+):
+  | {
+      ok: true
+      nextFen: string
+      move: Move
+      fireSuccess: boolean
+    }
+  | { ok: false } {
+  const game = new Chess(fen)
+  const pieceAtSource = game.get(from)
+  if (!pieceAtSource) return { ok: false }
+
+  if (
+    rules.onlyPieceTypes?.length &&
+    !rules.onlyPieceTypes.includes(pieceAtSource.type)
+  ) {
+    return { ok: false }
+  }
+
+  let move: Move
+  try {
+    move = game.move({ from, to, promotion: 'q' })
+  } catch {
+    return { ok: false }
+  }
+
+  const hasSolutionFilter =
+    Array.isArray(rules.solutionMoves) && rules.solutionMoves.length > 0
+  if (hasSolutionFilter) {
+    const matches = rules.solutionMoves!.some(
+      (s) => s.from === move.from && s.to === move.to,
+    )
+    if (!matches) {
+      game.undo()
+      return { ok: false }
+    }
+  }
+
+  if (rules.successOnCheckmate && !game.isCheckmate()) {
+    game.undo()
+    return { ok: false }
+  }
+
+  const hitsGoal = rules.goalSquare ? move.to === rules.goalSquare : false
+  const normalSuccess =
+    Boolean(rules.completeOnAnyMove) ||
+    (Boolean(rules.goalSquare) && hitsGoal)
+  const puzzleOnly =
+    (hasSolutionFilter || Boolean(rules.successOnCheckmate)) &&
+    !rules.completeOnAnyMove &&
+    !rules.goalSquare
+  const fireSuccess = normalSuccess || puzzleOnly
+
+  return {
+    ok: true,
+    nextFen: game.fen(),
+    move,
+    fireSuccess,
+  }
 }
 
 export function TeachBoard({
@@ -45,114 +115,145 @@ export function TeachBoard({
   successOnCheckmate,
   onSuccess,
   onMoveAccepted,
+  onPieceLanded,
   onMoveRejected,
   arrows = [],
   showNotation = true,
 }: TeachBoardProps) {
   const boardDomId = useStableBoardDomId()
   const [position, setPosition] = useState(fen)
+  const [selectedSquare, setSelectedSquare] = useState<Square | null>(null)
 
-  const filterDrag = useCallback(
-    ({ piece }: PieceHandlerArgs) => {
-      if (!interactive) return false
-      if (!onlyPieceTypes?.length) return true
-      const t = pieceTypeFromBoardPiece(piece.pieceType)
-      return onlyPieceTypes.includes(t)
-    },
-    [interactive, onlyPieceTypes],
+  const rules = useMemo<MoveRules>(
+    () => ({
+      onlyPieceTypes,
+      goalSquare,
+      completeOnAnyMove,
+      solutionMoves,
+      successOnCheckmate,
+    }),
+    [
+      onlyPieceTypes,
+      goalSquare,
+      completeOnAnyMove,
+      solutionMoves,
+      successOnCheckmate,
+    ],
   )
 
-  const canDragPieceOption = useMemo(() => {
-    if (!interactive || !onlyPieceTypes?.length) return undefined
-    return filterDrag
-  }, [filterDrag, interactive, onlyPieceTypes])
+  const legalDests = useMemo(() => {
+    if (!interactive || !selectedSquare) return new Set<string>()
+    const game = new Chess(position)
+    const piece = game.get(selectedSquare)
+    if (!piece || piece.color !== game.turn()) return new Set<string>()
+    return new Set(
+      game.moves({ square: selectedSquare, verbose: true }).map((m) => m.to),
+    )
+  }, [interactive, position, selectedSquare])
 
-  const onPieceDrop = useCallback(
-    ({
-      sourceSquare,
-      targetSquare,
-    }: {
-      sourceSquare: string
-      targetSquare: string | null
-    }) => {
-      if (!interactive || !targetSquare) return false
+  const squareRenderer = useMemo<SquareRenderer | undefined>(() => {
+    if (!interactive) return undefined
 
+    const Renderer: SquareRenderer = ({ square, children }) => {
+      const isSel = selectedSquare !== null && square === selectedSquare
+      const isLeg = legalDests.has(square)
+      if (!isSel && !isLeg) {
+        return <>{children}</>
+      }
+      return (
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          {children}
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 30,
+              pointerEvents: 'none',
+              backgroundColor: isSel
+                ? 'rgba(241, 196, 15, 0.58)'
+                : 'rgba(46, 204, 113, 0.58)',
+              boxShadow: isSel
+                ? 'inset 0 0 0 4px rgba(180, 100, 20, 1)'
+                : 'inset 0 0 0 4px rgba(15, 110, 55, 1)',
+            }}
+          />
+        </div>
+      )
+    }
+
+    return Renderer
+  }, [interactive, legalDests, selectedSquare])
+
+  const handleSquareClick = useCallback(
+    ({ square }: SquareHandlerArgs) => {
+      if (!interactive) return
+      const sq = square as Square
       const game = new Chess(position)
-      let pieceAtSource
-      try {
-        pieceAtSource = game.get(sourceSquare as Square)
-      } catch {
-        return false
-      }
 
-      if (
-        onlyPieceTypes?.length &&
-        pieceAtSource &&
-        !onlyPieceTypes.includes(pieceAtSource.type)
-      ) {
-        return false
-      }
-
-      let move
-      try {
-        move = game.move({
-          from: sourceSquare as Square,
-          to: targetSquare as Square,
-          promotion: 'q',
-        })
-      } catch {
-        onMoveRejected?.()
-        return false
-      }
-
-      const hasSolutionFilter =
-        Array.isArray(solutionMoves) && solutionMoves.length > 0
-      if (hasSolutionFilter) {
-        const matches = solutionMoves!.some(
-          (s) => s.from === move.from && s.to === move.to,
-        )
-        if (!matches) {
-          game.undo()
+      if (selectedSquare === null) {
+        const pc = game.get(sq)
+        if (!pc) return
+        if (pc.color !== game.turn()) {
           onMoveRejected?.()
-          return false
+          return
+        }
+        if (
+          onlyPieceTypes?.length &&
+          !onlyPieceTypes.includes(pc.type)
+        ) {
+          onMoveRejected?.()
+          return
+        }
+        setSelectedSquare(sq)
+        return
+      }
+
+      if (selectedSquare === sq) {
+        setSelectedSquare(null)
+        return
+      }
+
+      const result = tryApplyMove(position, selectedSquare, sq, rules)
+      if (result.ok) {
+        setPosition(result.nextFen)
+        setSelectedSquare(null)
+        onMoveAccepted?.()
+        onPieceLanded?.()
+        if (result.fireSuccess) onSuccess?.()
+        return
+      }
+
+      const clicked = game.get(sq)
+      if (clicked && clicked.color === game.turn()) {
+        if (
+          !onlyPieceTypes?.length ||
+          onlyPieceTypes.includes(clicked.type)
+        ) {
+          setSelectedSquare(sq)
+          return
         }
       }
 
-      if (successOnCheckmate && !game.isCheckmate()) {
-        game.undo()
-        onMoveRejected?.()
-        return false
-      }
-
-      const nextFen = game.fen()
-      setPosition(nextFen)
-      onMoveAccepted?.()
-
-      const hitsGoal = goalSquare ? move.to === goalSquare : false
-      const normalSuccess =
-        Boolean(completeOnAnyMove) ||
-        (Boolean(goalSquare) && hitsGoal)
-      const puzzleOnly =
-        (hasSolutionFilter || Boolean(successOnCheckmate)) &&
-        !completeOnAnyMove &&
-        !goalSquare
-      if (normalSuccess || puzzleOnly) {
-        onSuccess?.()
-      }
-
-      return true
+      onMoveRejected?.()
+      setSelectedSquare(null)
     },
     [
-      completeOnAnyMove,
-      goalSquare,
       interactive,
+      onlyPieceTypes,
       onMoveAccepted,
       onMoveRejected,
+      onPieceLanded,
       onSuccess,
-      onlyPieceTypes,
       position,
-      solutionMoves,
-      successOnCheckmate,
+      rules,
+      selectedSquare,
     ],
   )
 
@@ -163,10 +264,11 @@ export function TeachBoard({
           id: boardDomId,
           position,
           boardOrientation: 'white',
-          allowDragging: interactive,
-          dragActivationDistance: 6,
-          canDragPiece: canDragPieceOption,
-          onPieceDrop,
+          allowDragging: false,
+          showAnimations: false,
+          squareRenderer: interactive ? squareRenderer : undefined,
+          onSquareClick: interactive ? handleSquareClick : undefined,
+          onPieceDrop: undefined,
           arrows,
           showNotation,
           boardStyle: {

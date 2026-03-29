@@ -200,6 +200,7 @@ function LessonFlow({
     readAloud,
     playTapSound,
     playMoveSound,
+    playPieceLandSound,
     playOopsSound,
     playSuccessSound,
     playLessonDoneSound,
@@ -356,6 +357,10 @@ function LessonFlow({
           <div className="step-card practice-intro">
             <h3>Practice time</h3>
             <p className="step-body">{lesson.practice.hint}</p>
+            <p className="move-howto">
+              Tap your piece first, then tap a <strong>green</strong> square to
+              move. Tap the same piece again to cancel.
+            </p>
           </div>
 
           <div className="board-panel">
@@ -373,6 +378,7 @@ function LessonFlow({
                 setPracticeDone(true)
               }}
               onMoveAccepted={playMoveSound}
+              onPieceLanded={playPieceLandSound}
               onMoveRejected={playOopsSound}
             />
           </div>

@@ -43,6 +43,12 @@ export function playMove() {
   tone(380, 0.06, 0.055, 'triangle')
 }
 
+/** Short “thunk” so players hear that a piece actually landed on a square */
+export function playPieceLand() {
+  tone(300, 0.045, 0.07, 'sine')
+  setTimeout(() => tone(245, 0.07, 0.055, 'triangle'), 40)
+}
+
 export function playOops() {
   const c = ctx()
   if (!c) return

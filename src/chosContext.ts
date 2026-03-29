@@ -10,6 +10,7 @@ export type ChosContextValue = {
   isLessonComplete: (lessonId: string) => boolean
   playTapSound: () => void
   playMoveSound: () => void
+  playPieceLandSound: () => void
   playOopsSound: () => void
   playSuccessSound: () => void
   playLessonDoneSound: () => void

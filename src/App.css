@@ -318,6 +318,14 @@
   border-color: var(--ct-sky-border);
 }
 
+.move-howto {
+  margin: 0.85rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ct-accent-dark);
+  line-height: 1.45;
+}
+
 .board-panel {
   max-width: min(100%, 420px);
   margin: 0 auto 1.25rem;
@@ -334,12 +342,23 @@
   /* Board uses height:100%; parent needs a definite height from width */
   aspect-ratio: 1 / 1;
   min-height: 200px;
+  position: relative;
 }
 
-.teach-board-wrap > * {
-  width: 100% !important;
-  height: 100% !important;
+/*
+ * Only size the actual 8×8 grid. Do NOT use `.teach-board-wrap > *` — react-chessboard
+ * renders <DragOverlay> as a sibling of the board div; forcing 100% width/height on it
+ * blows up the dragged piece to fill the wrapper (or viewport).
+ */
+.teach-board-wrap > div[id$='-board'] {
+  width: 100%;
+  height: 100%;
   min-height: 0;
+}
+
+/* dnd-kit DragOverlay sibling: don’t block pointer hit-testing on squares beneath */
+.teach-board-wrap > div:not([id$='-board']) {
+  pointer-events: none;
 }
 
 .step-nav,

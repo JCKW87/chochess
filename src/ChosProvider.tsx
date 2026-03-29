@@ -15,6 +15,7 @@ import {
   playLessonDone,
   playOops,
   playMove,
+  playPieceLand,
   playSuccess,
   playTap,
 } from './sounds'
@@ -65,6 +66,10 @@ export function ChosProvider({ children }: { children: ReactNode }) {
     if (stored.soundEffects) playMove()
   }, [stored.soundEffects])
 
+  const playPieceLandSound = useCallback(() => {
+    if (stored.soundEffects) playPieceLand()
+  }, [stored.soundEffects])
+
   const playOopsSound = useCallback(() => {
     if (stored.soundEffects) playOops()
   }, [stored.soundEffects])
@@ -88,6 +93,7 @@ export function ChosProvider({ children }: { children: ReactNode }) {
       isLessonComplete,
       playTapSound,
       playMoveSound,
+      playPieceLandSound,
       playOopsSound,
       playSuccessSound,
       playLessonDoneSound,
@@ -102,6 +108,7 @@ export function ChosProvider({ children }: { children: ReactNode }) {
       isLessonComplete,
       playTapSound,
       playMoveSound,
+      playPieceLandSound,
       playOopsSound,
       playSuccessSound,
       playLessonDoneSound,
