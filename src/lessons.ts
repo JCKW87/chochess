@@ -397,6 +397,18 @@ export const lessons: Lesson[] = [
           'Black answers in the center too. Both sides are fighting for the middle of the board.',
         ],
         boardFen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
+        arrows: [
+          {
+            startSquare: 'e2',
+            endSquare: 'e4',
+            color: 'rgba(46, 139, 87, 0.9)',
+          },
+          {
+            startSquare: 'e7',
+            endSquare: 'e5',
+            color: 'rgba(200, 75, 60, 0.9)',
+          },
+        ],
       },
       {
         title: 'The queen jumps into the game early',
@@ -405,6 +417,18 @@ export const lessons: Lesson[] = [
           'Black blocks with the knight, remembering how knights hop in an L-shape.',
         ],
         boardFen: 'r1bqkbnr/pppp1ppp/2n5/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3',
+        arrows: [
+          {
+            startSquare: 'd1',
+            endSquare: 'h5',
+            color: 'rgba(46, 139, 87, 0.9)',
+          },
+          {
+            startSquare: 'b8',
+            endSquare: 'c6',
+            color: 'rgba(200, 75, 60, 0.9)',
+          },
+        ],
       },
       {
         title: 'Bishop and defender',
@@ -413,6 +437,18 @@ export const lessons: Lesson[] = [
           'Black develops the king’s knight to f6, guarding important squares.',
         ],
         boardFen: 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4',
+        arrows: [
+          {
+            startSquare: 'f1',
+            endSquare: 'c4',
+            color: 'rgba(46, 139, 87, 0.9)',
+          },
+          {
+            startSquare: 'g8',
+            endSquare: 'f6',
+            color: 'rgba(200, 75, 60, 0.9)',
+          },
+        ],
       },
       {
         title: 'The finish you trained for',
@@ -421,6 +457,13 @@ export const lessons: Lesson[] = [
           'On the next screen, try the winning queen move yourself!',
         ],
         boardFen: 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4',
+        arrows: [
+          {
+            startSquare: 'h5',
+            endSquare: 'f7',
+            color: 'rgba(180, 50, 120, 0.92)',
+          },
+        ],
       },
     ],
     practice: {
