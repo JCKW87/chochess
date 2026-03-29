@@ -114,8 +114,9 @@ function Home({ onPick }: { onPick: (l: Lesson) => void }) {
       <section className="hero-card">
         <h1>Hi, young chess star!</h1>
         <p>
-          Chos Learn Chess walks you through the rules, then serves up quick
-          tactics puzzles. Your progress is saved on this device.
+          Thirteen basics lessons end with a mini-game that ties everything
+          together, then you can try tactics puzzles. Your progress is saved on
+          this device.
         </p>
         {doneCount > 0 && (
           <p className="progress-hint">
@@ -274,16 +275,28 @@ function LessonFlow({
   return (
     <article className="lesson-flow">
       <div className="lesson-flow-top">
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={() => {
-            playTapSound()
-            onHome()
-          }}
-        >
-          All lessons
-        </button>
+        <div className="lesson-flow-start">
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => {
+              playTapSound()
+              onHome()
+            }}
+          >
+            All lessons
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() => {
+              playTapSound()
+              resetLessonState()
+            }}
+          >
+            Replay lesson
+          </button>
+        </div>
         <span className="progress-pill">
           Lesson {lessonIndex} of {lessons.length}
         </span>

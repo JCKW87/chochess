@@ -377,6 +377,61 @@ export const lessons: Lesson[] = [
     },
   },
   {
+    id: 'full-game',
+    emoji: '🎬',
+    title: 'A whole mini-game',
+    tagline: 'Lesson 13 — put it all together',
+    steps: [
+      {
+        title: 'From the very first square',
+        body: [
+          'Every chess game starts in the same position you saw in the board lesson. White moves first.',
+          'This final basics lesson walks through a short example so you can spot ideas you already practiced: pawns, knights, bishops, the queen, and checkmate.',
+        ],
+        boardFen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+      },
+      {
+        title: 'Pawns lead the way',
+        body: [
+          'White opens with the king’s pawn two squares—just like your pawn lesson.',
+          'Black answers in the center too. Both sides are fighting for the middle of the board.',
+        ],
+        boardFen: 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
+      },
+      {
+        title: 'The queen jumps into the game early',
+        body: [
+          'Here White brings the queen out on move two. In real games players often develop knights and bishops first—but this story is short, so the queen shows up fast!',
+          'Black blocks with the knight, remembering how knights hop in an L-shape.',
+        ],
+        boardFen: 'r1bqkbnr/pppp1ppp/2n5/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 2 3',
+      },
+      {
+        title: 'Bishop and defender',
+        body: [
+          'White’s bishop slides on a diagonal to c4, eyeing the soft f7 square near Black’s king.',
+          'Black develops the king’s knight to f6, guarding important squares.',
+        ],
+        boardFen: 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4',
+      },
+      {
+        title: 'The finish you trained for',
+        body: [
+          'White’s queen can capture on f7 with checkmate. That is the same kind of “game over” moment you studied in the checkmate lesson.',
+          'On the next screen, try the winning queen move yourself!',
+        ],
+        boardFen: 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4',
+      },
+    ],
+    practice: {
+      fen: 'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4',
+      hint: 'White to play. Move the queen from h5 to f7 to deliver checkmate—the king has no safe square.',
+      successMessage: 'Game over! You finished the story with the same mate pattern from your lessons.',
+      successOnCheckmate: true,
+      solutionMoves: [{ from: 'h5', to: 'f7' }],
+    },
+  },
+  {
     id: 'puzzle-rook-mate',
     emoji: '⚡',
     title: 'Puzzle: Rook checkmate',

@@ -1,7 +1,7 @@
-import { useCallback, useId, useState } from 'react'
+import { useCallback, useId, useMemo, useState } from 'react'
 import { Chessboard } from 'react-chessboard'
 import { Chess, type Square } from 'chess.js'
-import type { Arrow } from 'react-chessboard'
+import type { Arrow, PieceHandlerArgs } from 'react-chessboard'
 
 type TeachBoardProps = {
   fen: string
@@ -23,6 +23,18 @@ function pieceTypeFromBoardPiece(pieceType: string): string {
   return letter ? letter.toLowerCase() : ''
 }
 
+/**
+ * react-chessboard uses `#${id}-square-…` in querySelector. React `useId()` can
+ * include colons, which break CSS selectors and disable dragging—strip them.
+ */
+function useStableBoardDomId(): string {
+  const reactId = useId()
+  return useMemo(() => {
+    const safe = reactId.replace(/[^a-zA-Z0-9]/g, '')
+    return `choscb${safe || 'board'}`
+  }, [reactId])
+}
+
 export function TeachBoard({
   fen,
   interactive,
@@ -37,11 +49,11 @@ export function TeachBoard({
   arrows = [],
   showNotation = true,
 }: TeachBoardProps) {
-  const id = useId()
+  const boardDomId = useStableBoardDomId()
   const [position, setPosition] = useState(fen)
 
-  const canDragPiece = useCallback(
-    ({ piece }: { piece: { pieceType: string } }) => {
+  const filterDrag = useCallback(
+    ({ piece }: PieceHandlerArgs) => {
       if (!interactive) return false
       if (!onlyPieceTypes?.length) return true
       const t = pieceTypeFromBoardPiece(piece.pieceType)
@@ -49,6 +61,11 @@ export function TeachBoard({
     },
     [interactive, onlyPieceTypes],
   )
+
+  const canDragPieceOption = useMemo(() => {
+    if (!interactive || !onlyPieceTypes?.length) return undefined
+    return filterDrag
+  }, [filterDrag, interactive, onlyPieceTypes])
 
   const onPieceDrop = useCallback(
     ({
@@ -143,11 +160,12 @@ export function TeachBoard({
     <div className="teach-board-wrap">
       <Chessboard
         options={{
-          id: `teach-${id}`,
+          id: boardDomId,
           position,
           boardOrientation: 'white',
           allowDragging: interactive,
-          canDragPiece,
+          dragActivationDistance: 6,
+          canDragPiece: canDragPieceOption,
           onPieceDrop,
           arrows,
           showNotation,
